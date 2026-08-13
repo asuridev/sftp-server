@@ -1,0 +1,5 @@
+New-Item -ItemType Directory -Force -Path "gradle\wrapper" | Out-Null
+$b64 = (Get-Content "gradle-wrapper-8.14.jar.b64.txt" -Raw) -replace '\s',''
+[System.IO.File]::WriteAllBytes("$PWD\gradle\wrapper\gradle-wrapper.jar", [System.Convert]::FromBase64String($b64))
+
+El -replace '\s','' es importante: elimina los saltos de línea que agregué. Sin eso, FromBase64String falla.
