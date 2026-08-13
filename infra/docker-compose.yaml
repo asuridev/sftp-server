@@ -1,0 +1,31 @@
+services:
+  stcp-sftp-emulator:
+    image: docker.io/atmoz/sftp:alpine
+    container_name: stcp-sftp-emulator
+    restart: unless-stopped
+    ports:
+      # 2024 replica el puerto observado en la PoC real de STCP Gemini (docs/STCP-GEMINI.md, sección 8).
+      - "2024:22"
+    volumes:
+      - sftp-data:/home/stcp
+    # atmoz/sftp crea automáticamente cada carpeta listada tras el 4º ":" dentro de /home/stcp,
+    # replicando la estructura ENTRADA/SAIDA/TEMP/CONTROLE/FORMATO vista en la PoC.
+    command: stcp:stcp123:1001:100:ENTRADA,SAIDA,SAIDA/BACKUP,SAIDA/PENDENTE,TEMP,CONTROLE,FORMATO
+
+  stcp-sftp-browser:
+    image: docker.io/filebrowser/filebrowser:latest
+    container_name: stcp-sftp-browser
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    volumes:
+      # Mismo volumen que el SFTP emulado, solo lectura: es un visor, no otra vía de escritura.
+      - sftp-data:/srv:ro
+    # Sin autenticación (visor de solo lectura para desarrollo local, no expuesto fuera del host).
+    # --address 0.0.0.0 es obligatorio: el default es 127.0.0.1, que dentro del contenedor
+    # no es alcanzable desde el mapeo de puertos del host. Puerto 8080 (no 80) porque el
+    # contenedor corre como usuario sin privilegios y no puede abrir puertos <1024.
+    command: --noauth --address 0.0.0.0 --port 8080 --root /srv
+
+volumes:
+  sftp-data:
