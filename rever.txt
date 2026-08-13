@@ -1,5 +1,26 @@
+PowerShell — no necesita nada extra:
+
 New-Item -ItemType Directory -Force -Path "gradle\wrapper" | Out-Null
 $b64 = (Get-Content "gradle-wrapper-8.14.jar.b64.txt" -Raw) -replace '\s',''
 [System.IO.File]::WriteAllBytes("$PWD\gradle\wrapper\gradle-wrapper.jar", [System.Convert]::FromBase64String($b64))
 
 El -replace '\s','' es importante: elimina los saltos de línea que agregué. Sin eso, FromBase64String falla.
+
+Git Bash / Linux / macOS:
+
+mkdir -p gradle/wrapper
+base64 -d gradle-wrapper-8.14.jar.b64.txt > gradle/wrapper/gradle-wrapper.jar
+
+certutil — alternativa nativa de Windows si PowerShell está restringido:
+
+certutil -decode gradle-wrapper-8.14.jar.b64.txt gradle\wrapper\gradle-wrapper.jar
+
+3. Verificar integridad
+
+(Get-FileHash "gradle\wrapper\gradle-wrapper.jar" -Algorithm SHA256).Hash
+
+Debe dar exactamente:
+
+7D3A4AC4DE1C32B59BC6A4EB8ECB8E612CCD0CF1AE1E99F66902DA64DF296172
+
+Y el tamaño debe ser 43.764 bytes. Si no coincide, el archivo se corrompió en el traslado — suele pasar cuando el texto pasa por un editor que cambia la codificación.
